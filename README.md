@@ -156,6 +156,14 @@ Done with the test key supplied by the project owner (a v3 API key, stored outsi
 - Errors: after the token is revoked it returns to needing configuration and no longer calls TMDB, an upstream error returns UNAVAILABLE without the token, a 5xx is retried once, the self-limit rate, a 401 for an old client does not clear a new client.
 - v3 API key: format check, sent as a query parameter, and neither error messages (including url.Error) nor logs contain the key.
 
+## Official builds and releases
+
+This repository is the source code of the official Kryspal Media `tmdb` plugin. Official versions are built by this repository's GitHub Actions workflow from a `v*` tag, attached to a GitHub Release, and then added to the Kryspal Media plugin catalog, which Kryspal signs. The Kryspal Media server installs and updates official plugins from that signed catalog and verifies the signature.
+
+A binary you build from this source yourself is **not** signed by Kryspal and is not part of the official catalog. You are free to build, modify and run it under the Apache License 2.0, but the server treats it as a third-party plugin.
+
+Release process (maintainers): update `VERSION` and `CHANGELOG.md` for any change that alters the binary, wait for the CI workflow to pass on `main`, then push an annotated tag `vX.Y.Z` that matches `VERSION`. The release workflow builds linux/amd64 and linux/arm64 packages, creates the GitHub Release and notifies the main repository, which verifies the packages and publishes the catalog. A published version is never changed.
+
 ## License
 
 Apache License 2.0, see `LICENSE` and `NOTICE`. The TMDB logo in `logo/` is a TMDB brand asset and is **not** covered by the Apache License 2.0 (see `NOTICE`).
