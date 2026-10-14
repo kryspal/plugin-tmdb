@@ -505,7 +505,7 @@ func TestDescribeDeclaresHintCapabilities(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// Absolute episode numbers and hint search are both declared (phase 2 passed at full weight: 2026-10-12, A7 measured with the replay cache, 97/101, 0 wrong applications).
+	// Absolute episode numbers and hint search are both declared (phase 2 passed at full weight: measured with a replay cache, 97/101, 0 wrong applications).
 	if !slices.Contains(m.GetCapabilities(), pluginv1.CapabilityMetadataSeriesAbsolute) {
 		t.Error("metadata.series.absolute is not declared")
 	}
