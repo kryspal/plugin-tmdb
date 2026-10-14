@@ -12,6 +12,9 @@ env:
 jobs:
   build:
     runs-on: ubuntu-24.04
+    # Secrets used while building (for example an API key compiled into the binary) live in the "production"
+    # environment, which only v* tags may use, so no branch workflow can read them.
+    environment: production
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -47,13 +50,15 @@ jobs:
   notify:
     needs: publish
     runs-on: ubuntu-24.04
+    environment: production
     steps:
-      # PLUGIN_DISPATCH_TOKEN: a machine-account token limited to triggering repository_dispatch on the main repository.
+      # PLUGIN_DISPATCH_TOKEN (environment "production"): a fine-grained token for the main repository with
+      # Actions read and write only. It can start the publish-plugin workflow but cannot read or push code.
       - name: Notify the main repository
         env:
           TOKEN: ${{ secrets.PLUGIN_DISPATCH_TOKEN }}
           MAIN_REPO: ${{ vars.MAIN_REPO }}
         run: |
-          curl -fsS -X POST "https://api.github.com/repos/${MAIN_REPO}/dispatches" \
+          curl -fsS -X POST "https://api.github.com/repos/${MAIN_REPO}/actions/workflows/publish-plugin.yml/dispatches" \
             -H "Authorization: Bearer ${TOKEN}" -H "Accept: application/vnd.github+json" \
-            -d "{\"event_type\":\"plugin-released\",\"client_payload\":{\"plugin\":\"${PLUGIN_ID}\",\"version\":\"${GITHUB_REF_NAME#v}\",\"repository\":\"${GITHUB_REPOSITORY}\"}}"
+            -d "{\"ref\":\"main\",\"inputs\":{\"plugin\":\"${PLUGIN_ID}\",\"version\":\"${GITHUB_REF_NAME#v}\",\"repository\":\"${GITHUB_REPOSITORY}\"}}"
