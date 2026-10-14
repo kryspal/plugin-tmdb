@@ -1,0 +1,14 @@
+{
+  "name": "TMDB",
+  "description": "Metadata for movies, series, people and collections from The Movie Database.",
+  "nameI18n": {
+    "zh-TW": "TMDB",
+    "zh-CN": "TMDB"
+  },
+  "descriptionI18n": {
+    "zh-TW": "從 The Movie Database 取得電影、劇集、人物與合集的元資料。",
+    "zh-CN": "从 The Movie Database 获取电影、剧集、人物与合集的元数据。"
+  },
+  "owner": "Kryspal Media",
+  "capabilities": ["metadata.movie", "metadata.series", "metadata.person", "metadata.collection", "metadata.trailers", "metadata.person.search", "metadata.series.absolute", "metadata.search.hints", "images.person"]
+}

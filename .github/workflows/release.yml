@@ -1,0 +1,59 @@
+# Release for one official plugin repository: push a tag such as v1.2.3.
+# This workflow builds and publishes a GitHub Release, then notifies the main repository. It never touches the catalog
+# signing key or the R2 bucket: the catalog is signed and published by the main repository's publish-plugin workflow.
+name: release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+env:
+  PLUGIN_ID: tmdb
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
+        with: { go-version-file: go.mod }
+      - name: Tag must match VERSION
+        run: test "${GITHUB_REF_NAME}" = "v$(tr -d '[:space:]' < VERSION)"
+      - run: go vet ./... && go test -race -count=1 ./...
+      - name: Build and package
+        env:
+          APP_KEY_REQUIRED: ""
+        run: ./.github/scripts/package.sh "${GITHUB_REF_NAME#v}"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: packages
+          path: dist/*
+          if-no-files-found: error
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: packages
+          path: dist
+      - uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
+        with:
+          files: dist/*
+          fail_on_unmatched_files: true
+  notify:
+    needs: publish
+    runs-on: ubuntu-latest
+    steps:
+      # PLUGIN_DISPATCH_TOKEN: a machine-account token limited to triggering repository_dispatch on the main repository.
+      - name: Notify the main repository
+        env:
+          TOKEN: ${{ secrets.PLUGIN_DISPATCH_TOKEN }}
+          MAIN_REPO: ${{ vars.MAIN_REPO }}
+        run: |
+          curl -fsS -X POST "https://api.github.com/repos/${MAIN_REPO}/dispatches" \
+            -H "Authorization: Bearer ${TOKEN}" -H "Accept: application/vnd.github+json" \
+            -d "{\"event_type\":\"plugin-released\",\"client_payload\":{\"plugin\":\"${PLUGIN_ID}\",\"version\":\"${GITHUB_REF_NAME#v}\",\"repository\":\"${GITHUB_REPOSITORY}\"}}"
