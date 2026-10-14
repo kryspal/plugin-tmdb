@@ -11,7 +11,7 @@ env:
   PLUGIN_ID: tmdb
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
@@ -32,7 +32,7 @@ jobs:
           if-no-files-found: error
   publish:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
@@ -46,7 +46,7 @@ jobs:
           fail_on_unmatched_files: true
   notify:
     needs: publish
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       # PLUGIN_DISPATCH_TOKEN: a machine-account token limited to triggering repository_dispatch on the main repository.
       - name: Notify the main repository
