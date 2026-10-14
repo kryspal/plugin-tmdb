@@ -56,7 +56,7 @@ const certAuto = "auto"
 
 var countryRE = regexp.MustCompile(`^[A-Z]{2}$`)
 
-// versionFile is the single source of the plugin version: the Manifest version and also the output directory name of make plugins (change request 0017).
+// versionFile is the single source of the plugin version: the Manifest version.
 //
 //go:embed VERSION
 var versionFile string

@@ -32,7 +32,7 @@ type tmdbSearchResult struct {
 	Overview      string  `json:"overview"`
 	PosterPath    string  `json:"poster_path"`
 	Popularity    float64 `json:"popularity"`
-	// The following are for scoring hinted search (change request 0121 phase 2): genre codes (16 is animation), original language, and a series' production countries.
+	// The following are for scoring hinted search: genre codes (16 is animation), original language, and a series' production countries.
 	GenreIDs      []int    `json:"genre_ids"`
 	OriginalLang  string   `json:"original_language"`
 	OriginCountry []string `json:"origin_country"`
@@ -70,7 +70,7 @@ func (p *provider) Search(ctx context.Context, req *pluginv1.SearchRequest) (*pl
 		return &pluginv1.SearchResponse{}, nil
 	}
 	if len(req.GetTitles()) > 0 {
-		return p.searchHinted(ctx, c, adult, req, kind, lang) // hints for name recognition (change request 0121 phase 2, see hints.go)
+		return p.searchHinted(ctx, c, adult, req, kind, lang) // hints for name recognition (see hints.go)
 	}
 	search := func(query string) ([]tmdbSearchResult, error) {
 		q := url.Values{"query": {query}, "language": {lang}, "include_adult": {strconv.FormatBool(adult)}}

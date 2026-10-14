@@ -11,7 +11,7 @@ import (
 	pluginv1 "github.com/kryspal/plugin-sdk/pluginv1"
 )
 
-// Look up people by name (metadata.person.search, change request 0079). Many people share a name, so confirmed is only set when confirmed by a work:
+// Look up people by name (metadata.person.search). Many people share a name, so confirmed is only set when confirmed by a work:
 // the person's works (known_for or combined_credits) include a TMDB movie or series ID from the work hints.
 //
 // A single search makes at most 3 requests (not counting the one retry for a transient error inside get):

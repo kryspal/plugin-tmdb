@@ -20,7 +20,7 @@ import (
 	"github.com/kryspal/plugin-sdk/sdk"
 )
 
-// Tests for the name-recognition hint search (change order 0121 phase 2). All titles are synthetic; none comes from a real library.
+// Tests for the name-recognition hint search. All titles are synthetic; none comes from a real library.
 
 type hintTMDB struct {
 	*httptest.Server
@@ -517,7 +517,7 @@ func TestDescribeDeclaresHintCapabilities(t *testing.T) {
 	}
 }
 
-// Rating source (change order 0122 section F): TMDB's score and vote count go in ratings (source tmdb, max 10), community_rating as before; not given when there is no score.
+// Rating source: TMDB's score and vote count go in ratings (source tmdb, max 10), community_rating as before; not given when there is no score.
 func TestRatingsAreReported(t *testing.T) {
 	if got := tmdbRatings(7.45, 1234); len(got) != 1 || got[0].GetSource() != "tmdb" || got[0].GetValue() != 7.45 || got[0].GetMax() != 10 || got[0].GetVotes() != 1234 {
 		t.Errorf("ratings = %v", got)

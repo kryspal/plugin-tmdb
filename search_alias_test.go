@@ -16,7 +16,7 @@ import (
 	pluginv1 "github.com/kryspal/plugin-sdk/pluginv1"
 )
 
-// Alias and prefix tests for search scoring (change request: TMDB missed match). All use synthetic titles, with no names from a real library.
+// Alias and prefix tests for search scoring . All use synthetic titles, with no names from a real library.
 
 type aliasTMDB struct {
 	*httptest.Server

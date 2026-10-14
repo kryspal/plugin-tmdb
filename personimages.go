@@ -8,7 +8,7 @@ import (
 	pluginv1 "github.com/kryspal/plugin-sdk/pluginv1"
 )
 
-// GetImages implements pluginv1.ImageProviderServer for the capability images.person (change request 0156) and nothing else: TMDB's movie and series
+// GetImages implements pluginv1.ImageProviderServer for the capability images.person and nothing else: TMDB's movie and series
 // images come with GetItem. It returns all the profile photos TMDB has for the person, best first (the same order as GetPerson uses:
 // rating, then resolution). The person is found by the "tmdb" provider ID only; a name is not searched here (a wrong match would put
 // someone else's face on a person), the host has SearchPerson for finding the ID.

@@ -29,7 +29,7 @@ func (p *provider) GetItem(ctx context.Context, req *pluginv1.GetItemRequest) (*
 		return p.getSeason(ctx, c, req.GetSeriesId(), int(req.GetSeasonNumber()), ch)
 	case pluginv1.ItemType_ITEM_TYPE_EPISODE:
 		if req.AbsoluteEpisodeNumber != nil && req.SeasonNumber == nil && req.EpisodeNumber == nil {
-			// Absolute episode numbers for anime (change request 0121): mapped back to (season, episode) using each season's episode count.
+			// Absolute episode numbers for anime: mapped back to (season, episode) using each season's episode count.
 			if req.GetSeriesId() == "" || req.GetAbsoluteEpisodeNumber() < 1 {
 				return nil, invalidArgument("an absolute episode needs series_id and a number of at least 1")
 			}
@@ -69,7 +69,7 @@ func (p *provider) getTitle(ctx context.Context, c *tmdbClient, req *pluginv1.Ge
 	return p.titleMetadata(req.GetType(), it, ch), nil
 }
 
-// addOriginalLanguageImages adds images in the work's original language (change request 0116 E4: the image-language preference can only rank candidates in the original language if they exist).
+// addOriginalLanguageImages adds images in the work's original language (the image-language preference can only rank candidates in the original language if they exist).
 // include_image_language only carries the languages on the fallback chain plus xx and null; the original language is only known once the details come back, so when it is not on the chain one more
 // /images request is sent asking only for that language (not needed when the chain has it). A failure of this request does not affect the main result (the original-language images are just not added).
 func (p *provider) addOriginalLanguageImages(ctx context.Context, c *tmdbClient, path string, it *tmdbItem, ch []locale) {
@@ -214,7 +214,7 @@ func (p *provider) outLang(from, target locale) string {
 	return from.String()
 }
 
-// seriesStatus maps TMDB's series status to the protocol (change request 0019): Returning Series, In Production, Planned and Pilot are continuing,
+// seriesStatus maps TMDB's series status to the protocol: Returning Series, In Production, Planned and Pilot are continuing,
 // Ended and Canceled are ended, and anything else, as well as movies, is left unset.
 func seriesStatus(t pluginv1.ItemType, s string) pluginv1.SeriesStatus {
 	if t != pluginv1.ItemType_ITEM_TYPE_SERIES {
@@ -261,7 +261,7 @@ func notFoundEpisode(series string, s, e int) error {
 	return fmt.Errorf("episode S%02dE%02d of series %s: %w", s, e, series, errNotFound)
 }
 
-// tmdbRatings is TMDB's own rating (change request 0122 part F): source tmdb, maximum 10, vote count. Not given when TMDB has no score (0 votes).
+// tmdbRatings is TMDB's own rating: source tmdb, maximum 10, vote count. Not given when TMDB has no score (0 votes).
 // TMDB does not provide IMDb's score (only another source such as OMDb does), so this plugin has only one tmdb entry; community_rating is still filled with the same score.
 func tmdbRatings(average float64, votes int64) []*pluginv1.Rating {
 	if !(average > 0) {

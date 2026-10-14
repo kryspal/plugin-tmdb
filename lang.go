@@ -11,7 +11,7 @@ import (
 	pluginv1 "github.com/kryspal/plugin-sdk/pluginv1"
 )
 
-// Language handling (change request 0018 part D): metadata is stored once, scraped in the language chosen for the library, so the plugin turns the result into the target language before returning it:
+// Language handling: metadata is stored once, scraped in the language chosen for the library, so the plugin turns the result into the target language before returning it:
 // when the target language lacks a translated name it takes from the fallback chain, when Chinese lacks one it uses the conversion to the other Chinese script, and genres are looked up by genre ID in the plugin's name table.
 
 // locale is TMDB's "language-region", for example zh-TW, en-US; the region may be empty.

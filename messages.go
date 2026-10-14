@@ -2,7 +2,7 @@ package main
 
 import "github.com/kryspal/plugin-sdk/i18n"
 
-// messages is the string table for the settings page and error messages (change request 0057): three languages, en, zh-TW and zh-CN; other languages take text along i18n's fallback chain, ending in English.
+// messages is the string table for the settings page and error messages: three languages, en, zh-TW and zh-CN; other languages take text along i18n's fallback chain, ending in English.
 // When adding text, all three languages must be filled in (TestMessagesComplete checks the keys are complete; TestDescribeLanguages checks the text is not mixed across languages).
 var messages = i18n.New(messageTables)
 

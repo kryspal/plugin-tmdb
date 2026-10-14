@@ -10,7 +10,7 @@ import (
 	pluginv1 "github.com/kryspal/plugin-sdk/pluginv1"
 )
 
-// Trailers (change request 0022): only YouTube Trailer and Teaser (the forms an Emby RemoteTrailers client can open).
+// Trailers: only YouTube Trailer and Teaser (the forms an Emby RemoteTrailers client can open).
 
 // maxTrailers is the cap on the number of trailers returned.
 const maxTrailers = 5

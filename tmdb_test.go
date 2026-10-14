@@ -182,7 +182,7 @@ func newFakeTMDB(t *testing.T) *fakeTMDB {
 				}},
 			}
 		},
-		// Images in the original language (change order 0116 E4): include_image_language carries only the original language.
+		// Images in the original language: include_image_language carries only the original language.
 		"/3/movie/1678/images": func(q map[string]string) (int, any) {
 			if q["include_image_language"] != "ja" {
 				t.Errorf("original-language images requested with include_image_language=%q", q["include_image_language"])
@@ -277,7 +277,7 @@ func newFakeTMDB(t *testing.T) *fakeTMDB {
 				}},
 			}
 		},
-		// Person lookup by name (change order 0079): Alice has two people with that name, and 501's known_for contains movie 550; Bob's 601 is confirmed only through combined_credits.
+		// Person lookup by name: Alice has two people with that name, and 501's known_for contains movie 550; Bob's 601 is confirmed only through combined_credits.
 		"/3/search/person": func(q map[string]string) (int, any) {
 			switch q["query"] {
 			case "Alice Example":
@@ -375,7 +375,7 @@ func TestDescribe(t *testing.T) {
 		!strings.Contains(m.GetDescription(), "電影") || m.GetSuggestedConcurrency() != 12 {
 		t.Errorf("manifest = %v", m)
 	}
-	// The plan table (change order 0144): TMDB is a free official plugin, so it must not declare a licensed feature.
+	// The plan table: TMDB is a free official plugin, so it must not declare a licensed feature.
 	if len(m.GetFeatures()) != 0 {
 		t.Errorf("tmdb declares features %v, it is free", m.GetFeatures())
 	}
@@ -410,7 +410,7 @@ func TestAttributionLogo(t *testing.T) {
 	}
 }
 
-// TestVersionFile: the Manifest version comes from VERSION (make plugins uses the same file to decide the directory name), and it must be a semantic version.
+// TestVersionFile: the Manifest version comes from VERSION, and it must be a semantic version.
 func TestVersionFile(t *testing.T) {
 	m, _ := newProvider().Describe(context.Background(), &pluginv1.DescribeRequest{})
 	if !regexp.MustCompile(`^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$`).MatchString(m.GetVersion()) || m.GetVersion() != strings.TrimSpace(versionFile) {
@@ -1172,7 +1172,7 @@ func TestTrailers(t *testing.T) {
 	}
 }
 
-// TestSeriesStatus: TMDB's status mapped to the protocol (change order 0019).
+// TestSeriesStatus: TMDB's status mapped to the protocol.
 func TestSeriesStatus(t *testing.T) {
 	for in, want := range map[string]pluginv1.SeriesStatus{
 		"Returning Series": pluginv1.SeriesStatus_SERIES_STATUS_CONTINUING, "In Production": pluginv1.SeriesStatus_SERIES_STATUS_CONTINUING,
@@ -1193,7 +1193,7 @@ func TestSeriesStatus(t *testing.T) {
 	}
 }
 
-// TestResultLanguage: ItemMetadata.language is the language the result actually uses (change order 0018).
+// TestResultLanguage: ItemMetadata.language is the language the result actually uses.
 func TestResultLanguage(t *testing.T) {
 	f := newFakeTMDB(t)
 	p := configured(t, f)
@@ -1240,7 +1240,7 @@ func TestResultLanguage(t *testing.T) {
 	}
 }
 
-// TestCollectionEmptyTranslationFallsBack: when the translation is empty it falls back to TMDB's original name, so filling in the collection name (change order 0078) never gets an empty string.
+// TestCollectionEmptyTranslationFallsBack: when the translation is empty it falls back to TMDB's original name, so filling in the collection name never gets an empty string.
 func TestCollectionEmptyTranslationFallsBack(t *testing.T) {
 	p := configured(t, newFakeTMDB(t))
 	for _, lang := range []*pluginv1.Languages{zhTW(), {Language: "zh-CN"}, {Language: "en"}} {
@@ -1327,7 +1327,7 @@ func TestLogos(t *testing.T) {
 	}
 }
 
-// TestCreditGender (change order 0079): cast and crew of movie credits and series aggregate_credits both carry gender;
+// TestCreditGender: cast and crew of movie credits and series aggregate_credits both carry gender;
 // 0 or an unrecognized number is unknown.
 func TestCreditGender(t *testing.T) {
 	var c tmdbCredits
@@ -1356,7 +1356,7 @@ func TestCreditGender(t *testing.T) {
 	}
 }
 
-// TestSearchPerson (change order 0079): confirmed only when a work matches; each search has an upper limit on requests.
+// TestSearchPerson: confirmed only when a work matches; each search has an upper limit on requests.
 func TestSearchPerson(t *testing.T) {
 	f := newFakeTMDB(t)
 	p := configured(t, f)
@@ -1509,7 +1509,7 @@ func TestThroughputWithLatency(t *testing.T) {
 	}
 }
 
-// TestOriginalLanguageIsReported: a work's original language (change order 0120) comes from TMDB's original_language; empty when not given, "xx" is unknown and "cn" is zh.
+// TestOriginalLanguageIsReported: a work's original language comes from TMDB's original_language; empty when not given, "xx" is unknown and "cn" is zh.
 func TestOriginalLanguageIsReported(t *testing.T) {
 	f := newFakeTMDB(t)
 	p := configured(t, f)
@@ -1678,7 +1678,7 @@ func TestBackdropLimitValidationAndDescribe(t *testing.T) {
 	}
 }
 
-// images.person (change request 0156): all the profile photos TMDB has, best first, found by the tmdb provider ID only.
+// images.person: all the profile photos TMDB has, best first, found by the tmdb provider ID only.
 func TestPersonImages(t *testing.T) {
 	f := newFakeTMDB(t)
 	p := configured(t, f)

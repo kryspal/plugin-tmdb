@@ -21,7 +21,7 @@ import (
 	"github.com/kryspal/plugin-sdk/sdk"
 )
 
-// Hint search for name recognition (change order 0121 phase 2, section 5 of the research document). The host brings the hints for name
+// Hint search for name recognition. The host brings the hints for name
 // recognition in a SearchRequest (several titles, year source, region and language hints, the local season/episode structure, flags, runtime) and it comes here; a request without hints goes through the single-title search in search.go as before.
 //
 // Query plan (stops at the first match; one Search sends at most maxSearchRequests name searches and detail requests; ID lookups are not counted):
