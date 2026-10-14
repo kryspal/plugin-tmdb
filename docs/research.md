@@ -1,6 +1,6 @@
 # TMDB scraping research summary
 
-- Survey date: 2026-10-05 (a read-only survey commissioned by A0; this is the condensed version and keeps only the facts and decisions that concern this plugin).
+- Survey date: 2026-10-05 (a read-only survey; this is the condensed version and keeps only the facts and decisions that concern this plugin).
 - Licensing principle: for GPL/AGPL products only the public behavior and design are consulted, and source code is neither copied nor translated line by line; MoviePilot's filename test set and its identifier-word regex tables are also GPL content and must not be reused.
 - Products consulted: tinyMediaManager (tMM, Apache-2.0), Kodi's two TMDB scrapers (GPL), the Jellyfin TMDb plugin (GPL-2.0), Emby's built-in MovieDb (closed source), Infuse (closed source), MoviePilot and its plugin collection (GPL-3.0), jellyfin-plugin-metashark (GPL-3.0), StrmAssistant (GPL-3.0, the open-source version is no longer updated), Radarr (GPL-3.0), and the official TMDB documentation.
 - No actively maintained scraper designed for zh-TW was found; open-source products only convert toward Simplified. This plugin converts in both directions and treats Traditional and Simplified Chinese users equally.
@@ -45,12 +45,12 @@ Differences from the research recommendations:
 
 ## Not implemented
 
-- **Item 10 (needs a protocol change, see change order 0022, Phase 3)**: trailers (`videos`), `GetItemRequest.episode_group_id` (to specify an episode group; it must specify the exact group ID, not just the type), and `ListChanged` (the changes API, used with incremental refresh by how recent the content is; the refresh schedule belongs to A2).
+- **Item 10 (needs a protocol change)**: trailers (`videos`), `GetItemRequest.episode_group_id` (to specify an episode group; it must specify the exact group ID, not just the type), and `ListChanged` (the changes API, used with incremental refresh by how recent the content is; the refresh schedule belongs to the server).
 - **Candidate detail confirmation** (MoviePilot fetches details for every candidate to compare aliases): N+1 requests; left until the "recognition" interface needs it.
 - **Removing the Chinese "series" marker from collection names**: an appearance preference, kept by default, consistent with Emby.
 - **keywords to tags**: TMDB keywords are English only, so the value is low.
-- **A backdrop with text as Thumb**: the protocol has `IMAGE_TYPE_THUMB`, but TMDB does not mark which backdrops carry the title; first confirm with A3 how Emby clients use Thumb, then decide.
-- **Outside the plugin**: the `tmdbid-` marker in filenames (A2), user-defined identifier words (A2, A5, A6), anime season mapping (a Bangumi provider), and IMDb/Trakt ratings (separate providers).
+- **A backdrop with text as Thumb**: the protocol has `IMAGE_TYPE_THUMB`, but TMDB does not mark which backdrops carry the title; first confirm how Emby clients use Thumb, then decide.
+- **Outside the plugin**: the `tmdbid-` marker in filenames (server), user-defined identifier words (server), anime season mapping (a Bangumi provider), and IMDb/Trakt ratings (separate providers).
 
 ## Practices to avoid (lessons from each product)
 
