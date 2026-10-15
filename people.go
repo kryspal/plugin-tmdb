@@ -32,6 +32,7 @@ type tmdbPerson struct {
 
 // GetPerson implements pluginv1.MetadataProviderServer. One request brings back external IDs, photos and translations.
 func (p *provider) GetPerson(ctx context.Context, req *pluginv1.GetPersonRequest) (*pluginv1.PersonMetadata, error) {
+	sz := p.imageSizes()
 	c, _, err := p.ready()
 	if err != nil {
 		return nil, err
@@ -86,7 +87,7 @@ func (p *provider) GetPerson(ctx context.Context, req *pluginv1.GetPersonRequest
 	if pe.Images != nil {
 		profiles = pe.Images.Profiles
 	}
-	m.Images = convertImages(pluginv1.ImageType_IMAGE_TYPE_PRIMARY, profiles, pe.ProfilePath, ch)
+	m.Images = convertImages(pluginv1.ImageType_IMAGE_TYPE_PRIMARY, profiles, pe.ProfilePath, ch, sz.profile)
 	return m, nil
 }
 
@@ -160,6 +161,7 @@ func gender(n int) pluginv1.Gender {
 
 // GetCollection implements pluginv1.MetadataProviderServer. Members are in ascending order of release date.
 func (p *provider) GetCollection(ctx context.Context, req *pluginv1.GetCollectionRequest) (*pluginv1.CollectionMetadata, error) {
+	sz := p.imageSizes()
 	c, _, err := p.ready()
 	if err != nil {
 		return nil, err
@@ -191,8 +193,8 @@ func (p *provider) GetCollection(ctx context.Context, req *pluginv1.GetCollectio
 	if col.Images != nil {
 		imgs = *col.Images
 	}
-	m.Images = append(convertImages(pluginv1.ImageType_IMAGE_TYPE_PRIMARY, imgs.Posters, col.PosterPath, ch),
-		capImages(convertImages(pluginv1.ImageType_IMAGE_TYPE_BACKDROP, imgs.Backdrops, col.BackdropPath, ch), p.backdropLimit())...)
+	m.Images = append(convertImages(pluginv1.ImageType_IMAGE_TYPE_PRIMARY, imgs.Posters, col.PosterPath, ch, sz.poster),
+		capImages(convertImages(pluginv1.ImageType_IMAGE_TYPE_BACKDROP, imgs.Backdrops, col.BackdropPath, ch, sz.backdrop), p.backdropLimit())...)
 	parts := slices.Clone(col.Parts)
 	slices.SortStableFunc(parts, func(a, b tmdbSearchResult) int {
 		// those without a date go last.
@@ -205,19 +207,12 @@ func (p *provider) GetCollection(ctx context.Context, req *pluginv1.GetCollectio
 		return strings.Compare(a.ReleaseDate, b.ReleaseDate)
 	})
 	for _, part := range parts {
-		m.Parts = append(m.Parts, candidate(part, pluginv1.ItemType_ITEM_TYPE_MOVIE))
+		m.Parts = append(m.Parts, candidate(part, pluginv1.ItemType_ITEM_TYPE_MOVIE, sz.poster))
 	}
 	return m, nil
 }
 
 // ---- helpers ----
-
-func imageURL(path string) string {
-	if path == "" {
-		return ""
-	}
-	return imageBaseURL + path
-}
 
 func year(date string) int32 {
 	if len(date) < 4 {

@@ -194,17 +194,17 @@ func (p *provider) candidates(hits []tmdbSearchResult, req *pluginv1.SearchReque
 	}
 	resp := &pluginv1.SearchResponse{}
 	for _, x := range list {
-		c := candidate(x.h, req.GetType())
+		c := candidate(x.h, req.GetType(), p.imageSizes().poster)
 		c.Score = x.s
 		resp.Candidates = append(resp.Candidates, c)
 	}
 	return resp
 }
 
-func candidate(h tmdbSearchResult, t pluginv1.ItemType) *pluginv1.SearchCandidate {
+func candidate(h tmdbSearchResult, t pluginv1.ItemType, posterSize string) *pluginv1.SearchCandidate {
 	return &pluginv1.SearchCandidate{Id: strconv.Itoa(h.ID), Type: t, Name: first(h.Title, h.Name),
 		OriginalName: first(h.OriginalTitle, h.OriginalName), Year: year(first(h.ReleaseDate, h.FirstAirDate)),
-		Overview: h.Overview, ImageUrl: imageURL(h.PosterPath), ProviderIds: map[string]string{"tmdb": strconv.Itoa(h.ID)}}
+		Overview: h.Overview, ImageUrl: sizedURL(h.PosterPath, posterSize), ProviderIds: map[string]string{"tmdb": strconv.Itoa(h.ID)}}
 }
 
 func maxScore(hits []tmdbSearchResult, score func(tmdbSearchResult) float64) float64 {

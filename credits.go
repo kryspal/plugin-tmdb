@@ -20,11 +20,11 @@ const (
 //   - Cast: for a series (aggregate_credits), in descending order of episode count, with the role taken from the one with the most appearances; movies and episodes keep TMDB's order. At most maxCast people.
 //   - Episode guest stars: deduplicated, with sequential ordering.
 //   - Crew: directors, writers (Writing department), producers (at most maxProducers people), composers; deduplicated by person and role.
-func credits(c *tmdbCredits, guests []tmdbCast, maxCast int) []*pluginv1.Credit {
+func credits(c *tmdbCredits, guests []tmdbCast, maxCast int, profileSize string) []*pluginv1.Credit {
 	var out []*pluginv1.Credit
 	person := func(id int, name string, kind pluginv1.PersonKind, role string, order int, profile string, g int) *pluginv1.Credit {
 		return &pluginv1.Credit{PersonId: strconv.Itoa(id), Name: name, Kind: kind, Role: role, Order: int32(order),
-			ImageUrl: imageURL(profile), Gender: gender(g), ProviderIds: map[string]string{"tmdb": strconv.Itoa(id)}}
+			ImageUrl: sizedURL(profile, profileSize), Gender: gender(g), ProviderIds: map[string]string{"tmdb": strconv.Itoa(id)}}
 	}
 	var cast []tmdbCast
 	var crew []tmdbCrew

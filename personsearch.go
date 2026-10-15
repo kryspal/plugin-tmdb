@@ -139,7 +139,7 @@ func (p *provider) SearchPerson(ctx context.Context, req *pluginv1.SearchPersonR
 	for i, h := range hits {
 		id := strconv.Itoa(h.ID)
 		m := &pluginv1.PersonMetadata{Id: id, Name: h.Name, Gender: gender(h.Gender), ProviderIds: map[string]string{"tmdb": id}}
-		if u := imageURL(h.ProfilePath); u != "" {
+		if u := sizedURL(h.ProfilePath, p.imageSizes().profile); u != "" {
 			m.Images = []*pluginv1.Image{{Type: pluginv1.ImageType_IMAGE_TYPE_PRIMARY, Url: u}}
 		}
 		out.Candidates = append(out.Candidates, &pluginv1.PersonCandidate{Person: m, Confirmed: confirmed[i]})

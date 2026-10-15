@@ -106,15 +106,17 @@ func imageLanguage(i tmdbImage) string {
 }
 
 // convertImages sorts by kind and converts to the protocol format; fallback is the detail's own poster_path and so on, used when images has no data.
-func convertImages(kind pluginv1.ImageType, imgs []tmdbImage, fallback string, ch []locale) []*pluginv1.Image {
+// size is the TMDB size to download ("" for original); the reported width and height follow it.
+func convertImages(kind pluginv1.ImageType, imgs []tmdbImage, fallback string, ch []locale, size string) []*pluginv1.Image {
 	textual := kind == pluginv1.ImageType_IMAGE_TYPE_PRIMARY || kind == pluginv1.ImageType_IMAGE_TYPE_LOGO
 	var out []*pluginv1.Image
 	for _, i := range sortImages(imgs, ch, textual) {
-		out = append(out, &pluginv1.Image{Type: kind, Url: imageURL(i.FilePath), Language: imageLanguage(i),
-			Width: int32(i.Width), Height: int32(i.Height)})
+		w, h := scaleDims(i.Width, i.Height, size)
+		out = append(out, &pluginv1.Image{Type: kind, Url: sizedURL(i.FilePath, size), Language: imageLanguage(i),
+			Width: int32(w), Height: int32(h)})
 	}
 	if len(out) == 0 && fallback != "" {
-		out = append(out, &pluginv1.Image{Type: kind, Url: imageURL(fallback)})
+		out = append(out, &pluginv1.Image{Type: kind, Url: sizedURL(fallback, size)})
 	}
 	return out
 }

@@ -31,7 +31,7 @@ func (p *provider) GetImages(ctx context.Context, req *pluginv1.GetImagesRequest
 		}
 		return nil, p.upstream(c, err, "person images")
 	}
-	out := convertImages(pluginv1.ImageType_IMAGE_TYPE_PRIMARY, imgs.Profiles, "", chain(req.GetLanguages()))
+	out := convertImages(pluginv1.ImageType_IMAGE_TYPE_PRIMARY, imgs.Profiles, "", chain(req.GetLanguages()), p.imageSizes().profile)
 	if n := int(req.GetLimitPerType()); n > 0 && len(out) > n {
 		out = out[:n]
 	}

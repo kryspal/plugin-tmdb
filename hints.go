@@ -498,7 +498,7 @@ func (s *hintedSearch) response() *pluginv1.SearchResponse {
 	}
 	resp := &pluginv1.SearchResponse{}
 	for _, x := range list {
-		c := candidate(x.h, s.req.GetType())
+		c := candidate(x.h, s.req.GetType(), s.p.imageSizes().poster)
 		c.Score, c.MatchedTitle, c.Reasons = x.score, x.matched, x.reasons
 		resp.Candidates = append(resp.Candidates, c)
 	}

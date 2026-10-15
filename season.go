@@ -129,6 +129,7 @@ func (p *provider) season(ctx context.Context, c *tmdbClient, series string, n i
 }
 
 func (p *provider) getSeason(ctx context.Context, c *tmdbClient, seriesID string, n int, ch []locale) (*pluginv1.ItemMetadata, error) {
+	sz := p.imageSizes()
 	target := ch[0]
 	s, err := p.season(ctx, c, seriesID, n, target, imageLanguages(ch), true)
 	if err != nil {
@@ -158,8 +159,8 @@ func (p *provider) getSeason(ctx context.Context, c *tmdbClient, seriesID string
 	if s.Images != nil {
 		imgs = *s.Images
 	}
-	m.Images = convertImages(pluginv1.ImageType_IMAGE_TYPE_PRIMARY, imgs.Posters, s.PosterPath, ch)
-	m.Credits = credits(s.Credits, nil, p.castLimit())
+	m.Images = convertImages(pluginv1.ImageType_IMAGE_TYPE_PRIMARY, imgs.Posters, s.PosterPath, ch, sz.poster)
+	m.Credits = credits(s.Credits, nil, p.castLimit(), sz.profile)
 	return m, nil
 }
 
@@ -193,6 +194,7 @@ func (p *provider) seriesNames(ctx context.Context, c *tmdbClient, series string
 }
 
 func (p *provider) getEpisode(ctx context.Context, c *tmdbClient, series string, sn, en int, ch []locale) (*pluginv1.ItemMetadata, error) {
+	sz := p.imageSizes()
 	target := ch[0]
 	s, err := p.season(ctx, c, series, sn, target, imageLanguages(ch), true)
 	if err != nil {
@@ -240,8 +242,8 @@ func (p *provider) getEpisode(ctx context.Context, c *tmdbClient, series string,
 	}
 	m.Name, m.Overview, m.Language = name, overview, first(nameLang, overviewLang)
 	// when all episode names are placeholders leave it empty, and the server or client shows "Episode N"
-	m.Images = convertImages(pluginv1.ImageType_IMAGE_TYPE_PRIMARY, nil, e.StillPath, ch) // an episode's primary image is its still
-	m.Credits = credits(&tmdbCredits{Crew: e.Crew}, e.GuestStars, p.castLimit())
+	m.Images = convertImages(pluginv1.ImageType_IMAGE_TYPE_PRIMARY, nil, e.StillPath, ch, sizeOriginal) // an episode's primary image is its still
+	m.Credits = credits(&tmdbCredits{Crew: e.Crew}, e.GuestStars, p.castLimit(), sz.profile)
 	return m, nil
 }
 

@@ -74,6 +74,7 @@ type provider struct {
 	maxCast      int         // cap on cast members; 0 means unlimited
 	maxBackdrops int         // cap on backdrops; 0 means unlimited
 	certCountry  string      // certification country (two uppercase letters); an empty string means follow the target language's region
+	sizes        imageSizes  // download sizes for posters, backdrops and profile photos (empty means original)
 	trimSeries   atomic.Bool // strip the trailing Chinese "(series)" or "Collection" suffix from collection names (trim_collection_suffix)
 	conv         converter   // for output; setting convert_chinese can turn it off
 	fold         converter   // for search matching; always on
@@ -148,6 +149,9 @@ func (p *provider) Describe(_ context.Context, req *pluginv1.DescribeRequest) (*
 				Label:       t.T("maxBackdropsLabel"),
 				Description: t.T("maxBackdropsHelp"),
 			},
+			sizeField(keyBackdropSize, "backdropSize", backdropSizes, t),
+			sizeField(keyPosterSize, "posterSize", posterSizes, t),
+			sizeField(keyProfileSize, "profileSize", profileSizes, t),
 			{
 				Key: keyCertCountry, Type: pluginv1.ConfigFieldType_CONFIG_FIELD_TYPE_SELECT, Group: "advanced",
 				Label:        t.T("certLabel"),
@@ -221,6 +225,18 @@ func (p *provider) Configure(ctx context.Context, req *pluginv1.ConfigureRequest
 		}
 		maxBackdrops = n
 	}
+	var sizes imageSizes
+	for _, f := range []struct {
+		key     string
+		offered []string
+		dst     *string
+	}{{keyPosterSize, posterSizes, &sizes.poster}, {keyBackdropSize, backdropSizes, &sizes.backdrop}, {keyProfileSize, profileSizes, &sizes.profile}} {
+		raw := strings.TrimSpace(v[f.key])
+		if !validSize(raw, f.offered) {
+			resp.FieldErrors[f.key] = t.T("errImageSize")
+		}
+		*f.dst = raw
+	}
 	country := strings.ToUpper(strings.TrimSpace(v[keyCertCountry]))
 	if strings.EqualFold(country, certAuto) {
 		country = ""
@@ -248,7 +264,7 @@ func (p *provider) Configure(ctx context.Context, req *pluginv1.ConfigureRequest
 	}
 	p.mu.Lock()
 	p.client, p.includeAdult = c, v[keyIncludeAdult] == "true"
-	p.maxCast, p.certCountry, p.maxBackdrops = maxCast, country, maxBackdrops
+	p.maxCast, p.certCountry, p.maxBackdrops, p.sizes = maxCast, country, maxBackdrops, sizes
 	p.mu.Unlock()
 	p.conv.setOff(v[keyConvertZh] == "false")
 	p.trimSeries.Store(v[keyTrimSeries] == "true")

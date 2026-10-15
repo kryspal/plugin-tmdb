@@ -109,6 +109,7 @@ func originalLanguage(l string) string {
 
 // titleMetadata converts a movie's or series' details to the protocol format.
 func (p *provider) titleMetadata(t pluginv1.ItemType, it tmdbItem, ch []locale) *pluginv1.ItemMetadata {
+	sz := p.imageSizes()
 	target := ch[0]
 	ts := it.translations()
 	original := first(it.OriginalTitle, it.OriginalName)
@@ -168,14 +169,14 @@ func (p *provider) titleMetadata(t pluginv1.ItemType, it tmdbItem, ch []locale) 
 	if it.Images != nil {
 		imgs = *it.Images
 	}
-	m.Images = append(m.Images, convertImages(pluginv1.ImageType_IMAGE_TYPE_PRIMARY, imgs.Posters, it.PosterPath, ch)...)
-	m.Images = append(m.Images, capImages(convertImages(pluginv1.ImageType_IMAGE_TYPE_BACKDROP, imgs.Backdrops, it.BackdropPath, ch), p.backdropLimit())...)
-	m.Images = append(m.Images, convertImages(pluginv1.ImageType_IMAGE_TYPE_LOGO, imgs.Logos, "", ch)...)
+	m.Images = append(m.Images, convertImages(pluginv1.ImageType_IMAGE_TYPE_PRIMARY, imgs.Posters, it.PosterPath, ch, sz.poster)...)
+	m.Images = append(m.Images, capImages(convertImages(pluginv1.ImageType_IMAGE_TYPE_BACKDROP, imgs.Backdrops, it.BackdropPath, ch, sz.backdrop), p.backdropLimit())...)
+	m.Images = append(m.Images, convertImages(pluginv1.ImageType_IMAGE_TYPE_LOGO, imgs.Logos, "", ch, sizeOriginal)...)
 	cr := it.Credits
 	if it.Aggregate != nil {
 		cr = it.Aggregate
 	}
-	m.Credits = credits(cr, nil, p.castLimit())
+	m.Credits = credits(cr, nil, p.castLimit(), sz.profile)
 	m.Trailers = trailers(it.Videos, ch)
 	return m
 }
@@ -241,6 +242,13 @@ func (p *provider) backdropLimit() int {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	return p.maxBackdrops
+}
+
+// imageSizes returns the configured download sizes.
+func (p *provider) imageSizes() imageSizes {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.sizes
 }
 
 // capImages keeps only the first n (0 means all); the order is the one convertImages arranged (language priority chain, rating, resolution), so what is kept is the best n.

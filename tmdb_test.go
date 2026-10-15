@@ -474,7 +474,7 @@ func TestSearch(t *testing.T) {
 		t.Errorf("order %v scores %v", ids, scores)
 	}
 	c := r.GetCandidates()[0]
-	if c.GetYear() != 1999 || c.GetImageUrl() != imageBaseURL+"/p.jpg" || c.GetProviderIds()["tmdb"] != "550" {
+	if c.GetYear() != 1999 || c.GetImageUrl() != imageBase+"original/p.jpg" || c.GetProviderIds()["tmdb"] != "550" {
 		t.Errorf("candidate = %v", c)
 	}
 	limited, _ := p.Search(ctx, &pluginv1.SearchRequest{Type: pluginv1.ItemType_ITEM_TYPE_MOVIE, Name: "Fight Club", Year: 1999, Limit: 1})
@@ -649,7 +649,7 @@ func TestGetSeasonAndEpisode(t *testing.T) {
 	}
 	// The episode names of zh-TW and zh-HK are placeholders, zh-MO has none, zh-CN has one: converted to Traditional. The overview is English only.
 	if m.GetName() != "凜冬將至" || m.GetOverview() != "x" || m.GetIndexNumber() != 1 || m.GetParentIndexNumber() != 1 ||
-		len(m.GetImages()) != 1 || m.GetImages()[0].GetUrl() != imageBaseURL+"/still.jpg" {
+		len(m.GetImages()) != 1 || m.GetImages()[0].GetUrl() != imageBase+"original/still.jpg" {
 		t.Errorf("episode = %v", m)
 	}
 	kinds := map[pluginv1.PersonKind]int{}
@@ -938,7 +938,7 @@ func TestCreditsLimits(t *testing.T) {
 		crew = append(crew, tmdbCrew{ID: 100 + i, Name: "P", Job: "Producer", Department: "Production"})
 	}
 	crew = append(crew, tmdbCrew{ID: 100, Name: "P", Job: "Executive Producer", Department: "Production"}) // same person and same job de-duplicated
-	out := credits(&tmdbCredits{Cast: cast, Crew: crew}, nil, 3)
+	out := credits(&tmdbCredits{Cast: cast, Crew: crew}, nil, 3, "")
 	kinds := map[pluginv1.PersonKind]int{}
 	for _, c := range out {
 		kinds[c.GetKind()]++
@@ -946,12 +946,12 @@ func TestCreditsLimits(t *testing.T) {
 	if kinds[pluginv1.PersonKind_PERSON_KIND_ACTOR] != 3 || kinds[pluginv1.PersonKind_PERSON_KIND_PRODUCER] != maxProducers {
 		t.Errorf("kinds = %v", kinds)
 	}
-	if n := len(credits(&tmdbCredits{Cast: cast}, nil, 0)); n != 10 {
+	if n := len(credits(&tmdbCredits{Cast: cast}, nil, 0, "")); n != 10 {
 		t.Errorf("unlimited cast = %d", n)
 	}
 	// Guest stars de-duplicated, with consecutive order numbers.
 	var orders []int32
-	for _, c := range credits(nil, []tmdbCast{{ID: 1, Name: "A"}, {ID: 1, Name: "A"}, {ID: 2, Name: "B"}}, 0) {
+	for _, c := range credits(nil, []tmdbCast{{ID: 1, Name: "A"}, {ID: 1, Name: "A"}, {ID: 2, Name: "B"}}, 0, "") {
 		orders = append(orders, c.GetOrder())
 	}
 	if len(orders) != 2 || orders[0] != 0 || orders[1] != 1 {
@@ -1322,7 +1322,7 @@ func TestLogos(t *testing.T) {
 		t.Errorf("en logos = %s", got)
 	}
 	// An item without a logo: no Logo image is produced.
-	if got := convertImages(pluginv1.ImageType_IMAGE_TYPE_LOGO, nil, "", chain(zhTW())); len(got) != 0 {
+	if got := convertImages(pluginv1.ImageType_IMAGE_TYPE_LOGO, nil, "", chain(zhTW()), ""); len(got) != 0 {
 		t.Errorf("no logos = %v", got)
 	}
 }
@@ -1340,7 +1340,7 @@ func TestCreditGender(t *testing.T) {
 		t.Fatal(err)
 	}
 	got := map[string]pluginv1.Gender{}
-	for _, cr := range credits(&c, nil, 0) {
+	for _, cr := range credits(&c, nil, 0, "") {
 		got[cr.GetName()+"/"+cr.GetKind().String()] = cr.GetGender()
 	}
 	for k, want := range map[string]pluginv1.Gender{
