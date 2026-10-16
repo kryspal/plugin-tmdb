@@ -2,6 +2,10 @@
 
 All notable changes to this plugin are listed here. The version in `VERSION` is the single source of the version number; a published version is never changed.
 
+## 2.3.1
+
+- Bounds the token check in `Configure` to 5 seconds, so a hanging TMDB can no longer delay startup or a settings save for up to 40 seconds. The settings are still accepted when TMDB cannot be reached.
+
 ## 2.3.0
 
 - Adds the advanced settings `backdrop_size`, `poster_size` and `profile_size`: choose a smaller download size for backdrops (`w1280`), posters (`w780`) and person photos (`h632`) to save bandwidth and disk space. The default stays `original`, so existing installations are unchanged. A change only affects titles scraped or refreshed afterwards.

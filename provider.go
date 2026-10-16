@@ -12,6 +12,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"google.golang.org/protobuf/proto"
 
@@ -30,6 +31,9 @@ const (
 	keyCertCountry  = "certification_country"
 	keyConvertZh    = "convert_chinese"
 	keyTrimSeries   = "trim_collection_suffix"
+
+	// authCheckTimeout bounds the token check in Configure (protocol: verification takes no more than a few seconds).
+	authCheckTimeout = 5 * time.Second
 
 	maxCastLimit = 500
 	// defaultMaxBackdrops is the default cap on the number of backdrops (setting max_backdrops; 0 means all); maxBackdropsLimit is the upper bound of the setting.
@@ -255,7 +259,10 @@ func (p *provider) Configure(ctx context.Context, req *pluginv1.ConfigureRequest
 	var auth struct {
 		Success bool `json:"success"`
 	}
-	switch err := c.get(ctx, "/authentication", nil, &auth); {
+	// Verification must not hold up startup: cap it (the client's own timeout is 20 s per attempt, with one retry).
+	vctx, cancel := context.WithTimeout(ctx, authCheckTimeout)
+	defer cancel()
+	switch err := c.get(vctx, "/authentication", nil, &auth); {
 	case errors.Is(err, errUnauthorized):
 		resp.FieldErrors[keyToken] = t.T("errTokenRejected")
 		return resp, nil

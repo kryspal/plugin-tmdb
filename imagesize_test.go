@@ -2,8 +2,12 @@ package main
 
 import (
 	"context"
+	"log/slog"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	pluginv1 "github.com/kryspal/plugin-sdk/pluginv1"
 )
@@ -190,5 +194,33 @@ func TestImageSizeValidationAndDescribe(t *testing.T) {
 		if found != 3 {
 			t.Errorf("%s: %d size fields, want 3", lang, found)
 		}
+	}
+}
+
+// A hanging TMDB must not hold Configure up for the client's 20 s timeout: the token check is capped and the settings are still accepted.
+func TestConfigureTokenCheckIsBounded(t *testing.T) {
+	release := make(chan struct{})
+	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case <-release:
+		case <-r.Context().Done():
+		}
+	}))
+	defer srv.Close()
+	defer close(release)
+	p := newProvider()
+	p.newClient = func(base, token string, log *slog.Logger) *tmdbClient {
+		c := newClient(base, token, log)
+		c.http = srv.Client()
+		c.http.Timeout = requestTimeout
+		return c
+	}
+	start := time.Now()
+	resp, err := p.Configure(context.Background(), &pluginv1.ConfigureRequest{Values: map[string]string{keyToken: goodToken, keyBaseURL: srv.URL + "/3"}})
+	if err != nil || len(resp.GetFieldErrors()) > 0 {
+		t.Fatalf("Configure = %v, %v", resp, err)
+	}
+	if d := time.Since(start); d > authCheckTimeout+2*time.Second {
+		t.Errorf("Configure took %v, want about %v at most", d, authCheckTimeout)
 	}
 }
