@@ -67,7 +67,7 @@ func parseLocale(tag string) locale {
 func tmdbLanguage(tag string) string { return parseLocale(tag).String() }
 
 // chineseSiblings returns the fallback order for a Chinese target: regions with the same script first, the other script after.
-// zh-TW：HK、MO、CN、SG；zh-HK：MO、TW、CN、SG；zh-CN：SG、TW、HK。
+// zh-TW: HK, MO, CN, SG; zh-HK: MO, TW, CN, SG; zh-CN: SG, TW, HK.
 func chineseSiblings(l locale) []locale {
 	zh := func(r ...string) []locale {
 		out := make([]locale, len(r))
