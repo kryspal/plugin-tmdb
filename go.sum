@@ -2,8 +2,8 @@ github.com/golang/protobuf v1.5.4 h1:i7eJL8qZTpSEXOPTxNKhASYpMn+8e5Q6AdndVa1dWek
 github.com/golang/protobuf v1.5.4/go.mod h1:lnTiLA8Wa4RWRcIUkrtSVa5nRhsEGBg48fD6rSs7xps=
 github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
 github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
-github.com/kryspal/plugin-sdk v0.1.0 h1:QW5fWWhKR2BKPOLqzWQh8x0JTA/7DUpaW9O1mQsk5Dg=
-github.com/kryspal/plugin-sdk v0.1.0/go.mod h1:IkTHuPKwk8kedvVWOegns8lXKYhj/+RFoVnvKD+2Dro=
+github.com/kryspal/plugin-sdk v0.2.0 h1:4qhC1O5bt0WkJyxI8aQOHtOwU2SW5Lq8/9JHIaSvVg4=
+github.com/kryspal/plugin-sdk v0.2.0/go.mod h1:T0AgxEe6kX/GWp8ifS//N1eeAyh2aT3iI9hm0VR+QYs=
 golang.org/x/net v0.60.0 h1:79p50tfZlm0J9YfoDsSi639qSXNGVwEzOPLCxM2FsYU=
 golang.org/x/net v0.60.0/go.mod h1:2DA/G1UfVbCpQPeWTmMPGY7Cs2PkBkwu743bVX5PIVg=
 golang.org/x/sync v0.23.0 h1:KameEIfc1IkluZyXWLn39Wd4tURc6GbCiISGiZm2bQk=

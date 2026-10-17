@@ -10,6 +10,7 @@
     "zh-CN": "从 The Movie Database 获取电影、剧集、人物与合集的元数据。"
   },
   "owner": "Kryspal Media",
+  "minServer": "0.9.2-beta",
   "homepage": "https://github.com/kryspal/plugin-tmdb",
   "capabilities": ["metadata.movie", "metadata.series", "metadata.person", "metadata.collection", "metadata.trailers", "metadata.person.search", "metadata.series.absolute", "metadata.search.hints", "images.person"]
 }
