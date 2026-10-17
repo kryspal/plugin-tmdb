@@ -65,21 +65,26 @@ func (p *provider) getTitle(ctx context.Context, c *tmdbClient, req *pluginv1.Ge
 	if err := c.get(ctx, path, q, &it); err != nil {
 		return nil, p.upstream(c, err, "item")
 	}
-	p.addOriginalLanguageImages(ctx, c, path, &it, ch)
-	return p.titleMetadata(req.GetType(), it, ch), nil
+	var g gaps
+	g.add(p.addOriginalLanguageImages(ctx, c, path, &it, ch))
+	m := p.titleMetadata(req.GetType(), it, ch)
+	g.apply(func(n []*pluginv1.Notice, incomplete bool, retry uint32) {
+		m.Notices, m.Incomplete, m.RetryAfterSeconds = n, incomplete, retry
+	})
+	return m, nil
 }
 
 // addOriginalLanguageImages adds images in the work's original language (the image-language preference can only rank candidates in the original language if they exist).
 // include_image_language only carries the languages on the fallback chain plus xx and null; the original language is only known once the details come back, so when it is not on the chain one more
-// /images request is sent asking only for that language (not needed when the chain has it). A failure of this request does not affect the main result (the original-language images are just not added).
-func (p *provider) addOriginalLanguageImages(ctx context.Context, c *tmdbClient, path string, it *tmdbItem, ch []locale) {
+// /images request is sent asking only for that language (not needed when the chain has it). A failure of this request does not affect the main result (the original-language images are just not added); the caller reports it as a gap so the host asks again later.
+func (p *provider) addOriginalLanguageImages(ctx context.Context, c *tmdbClient, path string, it *tmdbItem, ch []locale) error {
 	orig := originalLanguage(it.OriginalLang)
 	if orig == "" || slices.ContainsFunc(ch, func(l locale) bool { return l.lang == orig }) {
-		return
+		return nil
 	}
 	var extra tmdbImages
 	if err := c.get(ctx, path+"/images", url.Values{"include_image_language": {orig}}, &extra); err != nil {
-		return
+		return err
 	}
 	if it.Images == nil {
 		it.Images = &tmdbImages{}
@@ -94,6 +99,7 @@ func (p *provider) addOriginalLanguageImages(ctx context.Context, c *tmdbClient,
 	merge(&it.Images.Posters, extra.Posters)
 	merge(&it.Images.Backdrops, extra.Backdrops)
 	merge(&it.Images.Logos, extra.Logos)
+	return nil
 }
 
 // originalLanguage normalizes TMDB's original_language to BCP 47: "xx" (no linguistic content) counts as unknown, and "cn" (TMDB's non-standard code for Cantonese) counts as zh.

@@ -27,7 +27,11 @@ func (p *provider) GetImages(ctx context.Context, req *pluginv1.GetImagesRequest
 	var imgs tmdbImages
 	if err := c.get(ctx, "/person/"+url.PathEscape(id)+"/images", nil, &imgs); err != nil {
 		if errors.Is(err, errNotFound) {
-			return &pluginv1.GetImagesResponse{}, nil
+			resp := &pluginv1.GetImagesResponse{}
+			if hostShowsNotices() {
+				resp.Notices = []*pluginv1.Notice{notFoundNotice("TMDB has no photos for this person.")}
+			}
+			return resp, nil
 		}
 		return nil, p.upstream(c, err, "person images")
 	}

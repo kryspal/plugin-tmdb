@@ -106,6 +106,10 @@ Metadata is stored once, scraped in the language of the library, so what the plu
   - Request count: at most 3 per search (search 1 to 2, `/find` 0 to 1, `combined_credits` uses the remaining budget, and `known_for` already confirmed is not queried again); the single retry the HTTP layer makes on a transient error is not included. At most 5 candidates are returned, carrying only ID, name, gender and avatar; the host fetches the full data with `GetPerson`.
 - **Images**: original-size URLs (`https://image.tmdb.org/t/p/original…`), downloaded and thumbnailed by the server. The main image of an episode is the still.
 
+### Notices (2.4.0)
+
+On a host that lists `scrape_notices` in `KRYSPAL_HOST_FEATURES` the plugin says what happened at TMDB when a result is thinner than usual (notices.go): `not_found` for a search or a person photo lookup that found nothing, and for a skipped side request `blocked` (429, with `retry_after_seconds` from `Retry-After`), `timeout` or `error`. A skipped side request also sets `incomplete`. A 401 and a 429 on the main request stay errors, as before: the host already pauses or asks for a new token. Messages are fixed sentences without URLs or credentials. Hosts without the feature receive nothing new.
+
 ### Image order
 
 The protocol requires the first image of each kind to be the preferred one. `include_image_language` carries the languages on the fallback chain plus `xx` and `null`; `xx` and null both mean no text. The region of TMDB images (`iso_3166_1`) is often wrong, so it is used only for ordering and never for filtering.

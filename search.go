@@ -44,8 +44,17 @@ const goodMatch = 0.8
 // aliasCandidates is the number of candidates whose aliases and per-language translated names are compared when the name did not match (ordered by current score, ties keeping TMDB's order).
 const aliasCandidates = 3
 
-// Search implements pluginv1.MetadataProviderServer.
+// Search implements pluginv1.MetadataProviderServer. A search that finds nothing says so in a notice, so the identify dialog can tell "no match" from "not asked".
 func (p *provider) Search(ctx context.Context, req *pluginv1.SearchRequest) (*pluginv1.SearchResponse, error) {
+	resp, err := p.search(ctx, req)
+	if err == nil && len(resp.GetCandidates()) == 0 && len(resp.GetNotices()) == 0 && hostShowsNotices() &&
+		(strings.TrimSpace(req.GetName()) != "" || len(req.GetProviderIds()) > 0) {
+		resp.Notices = []*pluginv1.Notice{notFoundNotice("TMDB has no match for this title.")}
+	}
+	return resp, err
+}
+
+func (p *provider) search(ctx context.Context, req *pluginv1.SearchRequest) (*pluginv1.SearchResponse, error) {
 	c, adult, err := p.ready()
 	if err != nil {
 		return nil, err

@@ -222,6 +222,7 @@ type hintedSearch struct {
 	hits   []tmdbSearchResult
 	asked  map[string]bool
 	infos  map[int]*titleInfo
+	gaps   gaps // later requests that failed and were skipped
 }
 
 // searchHinted searches and scores according to the query plan; it returns candidates in descending score order. If the first request fails it returns the error; if a later request fails (rate limiting excepted) it is skipped and the results already obtained are used.
@@ -269,7 +270,9 @@ func (p *provider) searchHinted(ctx context.Context, c *tmdbClient, adult bool, 
 	if err := s.enrich(ctx); err != nil { // 5: aliases, translations, release dates, runtime, season/episode counts
 		return nil, err
 	}
-	return s.response(), nil
+	resp := s.response()
+	s.gaps.apply(func(n []*pluginv1.Notice, _ bool, _ uint32) { resp.Notices = n })
+	return resp, nil
 }
 
 func reliableYear(src pluginv1.YearSource) bool {
@@ -387,6 +390,9 @@ func (s *hintedSearch) failure(ctx context.Context, err error, critical bool, wh
 	}
 	if _, ok := errors.AsType[*sdk.RateLimitError](err); ok {
 		return err // the SDK turns it into RESOURCE_EXHAUSTED with retry-after: the whole plugin pauses
+	}
+	if !errors.Is(err, errNotFound) { // a candidate that vanished between two requests is not worth telling the user
+		s.gaps.add(err)
 	}
 	s.c.log.Warn("TMDB hinted search: a request failed; continuing with what was found", slog.String("request", what), slog.String("error", err.Error()))
 	return nil
