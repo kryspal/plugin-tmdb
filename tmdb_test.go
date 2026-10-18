@@ -1577,7 +1577,7 @@ func TestOriginalLanguageImagesAreRequested(t *testing.T) {
 	}
 }
 
-// Stills: the backdrop count limit (setting max_backdrops, default 20, 0 means all); the ones kept are the first in the ordering (language preference chain, rating, resolution), without duplicates;
+// Stills: the backdrop count limit (setting max_stills, default 30; the plugin returns that many plus the first one for the background, 0 means all); the ones kept are the first in the ordering (language preference chain, rating, resolution), without duplicates;
 // the plugin downloads no image (the fake server of this test has only API paths), and there are no per-image requests. Other kinds of images are not affected.
 func TestBackdropLimit(t *testing.T) {
 	f := newFakeTMDB(t)
@@ -1632,23 +1632,23 @@ func TestBackdropLimit(t *testing.T) {
 		}
 		return urls
 	}
-	all := get(map[string]string{keyMaxBackdrops: "0"})
+	all := get(map[string]string{keyMaxStills: "0"})
 	if len(all) != 30 {
-		t.Fatalf("max_backdrops=0 returned %d backdrops, want all 30", len(all))
+		t.Fatalf("max_stills=0 returned %d backdrops, want all 30", len(all))
 	}
 	def := get(nil)
-	if len(def) != defaultMaxBackdrops || defaultMaxBackdrops != 20 {
-		t.Fatalf("the default returned %d backdrops, want %d", len(def), defaultMaxBackdrops)
+	if defaultMaxStills != 30 || len(def) != len(all) {
+		t.Fatalf("the default returned %d backdrops, want all %d (the default 30 plus the first fits)", len(def), len(all))
 	}
-	if few := get(map[string]string{keyMaxBackdrops: "5"}); len(few) != 5 {
-		t.Errorf("max_backdrops=5 returned %d", len(few))
+	if few := get(map[string]string{keyMaxStills: "5"}); len(few) != 6 {
+		t.Errorf("max_stills=5 returned %d", len(few))
 	}
 	for i := range def { // truncation takes the first in the ordering, the order is unchanged
 		if def[i] != all[i] {
 			t.Fatalf("backdrop %d of the capped list = %s, want %s (the best ones, same order)", i, def[i], all[i])
 		}
 	}
-	if big := get(map[string]string{keyMaxBackdrops: "200"}); len(big) != 30 {
+	if big := get(map[string]string{keyMaxStills: "200"}); len(big) != 30 {
 		t.Errorf("a limit above the count returned %d", len(big))
 	}
 }
@@ -1656,9 +1656,9 @@ func TestBackdropLimit(t *testing.T) {
 func TestBackdropLimitValidationAndDescribe(t *testing.T) {
 	p := newProvider()
 	for _, bad := range []string{"-1", "201", "abc", "1.5"} {
-		resp, err := p.Configure(context.Background(), &pluginv1.ConfigureRequest{Values: map[string]string{keyToken: goodToken, keyMaxBackdrops: bad}, Language: "zh-TW"})
-		if err != nil || resp.GetFieldErrors()[keyMaxBackdrops] == "" {
-			t.Errorf("max_backdrops=%q accepted: %v %v", bad, resp, err)
+		resp, err := p.Configure(context.Background(), &pluginv1.ConfigureRequest{Values: map[string]string{keyToken: goodToken, keyMaxStills: bad}, Language: "zh-TW"})
+		if err != nil || resp.GetFieldErrors()[keyMaxStills] == "" {
+			t.Errorf("max_stills=%q accepted: %v %v", bad, resp, err)
 		}
 	}
 	for _, lang := range []string{"en", "zh-TW", "zh-CN"} {
@@ -1668,11 +1668,11 @@ func TestBackdropLimitValidationAndDescribe(t *testing.T) {
 		}
 		var f *pluginv1.ConfigField
 		for _, x := range m.GetConfigFields() {
-			if x.GetKey() == keyMaxBackdrops {
+			if x.GetKey() == keyMaxStills {
 				f = x
 			}
 		}
-		if f == nil || f.GetType() != pluginv1.ConfigFieldType_CONFIG_FIELD_TYPE_INT || f.GetDefaultValue() != "20" || f.GetMin() != 0 || f.GetMax() != 200 || f.GetLabel() == "" || f.GetDescription() == "" {
+		if f == nil || f.GetType() != pluginv1.ConfigFieldType_CONFIG_FIELD_TYPE_INT || f.GetDefaultValue() != "30" || f.GetMin() != 0 || f.GetMax() != 200 || f.GetLabel() == "" || f.GetDescription() == "" {
 			t.Errorf("%s: field = %v", lang, f)
 		}
 	}

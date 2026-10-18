@@ -27,7 +27,7 @@ const (
 	keyIncludeAdult = "include_adult"
 	keyBaseURL      = "base_url"
 	keyMaxCast      = "max_cast"
-	keyMaxBackdrops = "max_backdrops"
+	keyMaxStills    = "max_stills"
 	keyCertCountry  = "certification_country"
 	keyConvertZh    = "convert_chinese"
 	keyTrimSeries   = "trim_collection_suffix"
@@ -36,10 +36,10 @@ const (
 	authCheckTimeout = 5 * time.Second
 
 	maxCastLimit = 500
-	// defaultMaxBackdrops is the default cap on the number of backdrops (setting max_backdrops; 0 means all); maxBackdropsLimit is the upper bound of the setting.
+	// defaultMaxStills is the default cap on the number of stills (setting max_stills; 0 means all); maxStillsLimit is the upper bound of the setting.
 	// TMDB can hold over a hundred stills for a popular work, and the Emby-compatible API attaches BackdropImageTags to every item, so too many tags would bloat list responses.
-	defaultMaxBackdrops = 20
-	maxBackdropsLimit   = 200
+	defaultMaxStills = 30
+	maxStillsLimit   = 200
 
 	// attributionText is the statement TMDB requires (the English original, the same in every language; the logo must be less prominent than this product's own logo, see README).
 	// It is only placed in Manifest.attribution.text (shown in the attribution row of the detail page) and not repeated in the description.
@@ -76,7 +76,7 @@ type provider struct {
 	client       *tmdbClient // nil: not yet configured
 	includeAdult bool
 	maxCast      int         // cap on cast members; 0 means unlimited
-	maxBackdrops int         // cap on backdrops; 0 means unlimited
+	maxStills    int         // cap on stills; 0 means unlimited
 	certCountry  string      // certification country (two uppercase letters); an empty string means follow the target language's region
 	sizes        imageSizes  // download sizes for posters, backdrops and profile photos (empty means original)
 	trimSeries   atomic.Bool // strip the trailing Chinese "(series)" or "Collection" suffix from collection names (trim_collection_suffix)
@@ -100,7 +100,7 @@ func capabilities() []string {
 }
 
 func newProvider() *provider {
-	return &provider{newClient: newClient, maxCast: defaultMaxCast, maxBackdrops: defaultMaxBackdrops}
+	return &provider{newClient: newClient, maxCast: defaultMaxCast, maxStills: defaultMaxStills}
 }
 
 // Describe implements pluginv1.PluginServer.
@@ -148,10 +148,10 @@ func (p *provider) Describe(_ context.Context, req *pluginv1.DescribeRequest) (*
 				Description: t.T("maxCastHelp"),
 			},
 			{
-				Key: keyMaxBackdrops, Type: pluginv1.ConfigFieldType_CONFIG_FIELD_TYPE_INT, DefaultValue: strconv.Itoa(defaultMaxBackdrops), Group: "advanced",
-				Min: proto.Int64(0), Max: proto.Int64(maxBackdropsLimit),
-				Label:       t.T("maxBackdropsLabel"),
-				Description: t.T("maxBackdropsHelp"),
+				Key: keyMaxStills, Type: pluginv1.ConfigFieldType_CONFIG_FIELD_TYPE_INT, DefaultValue: strconv.Itoa(defaultMaxStills), Group: "advanced",
+				Min: proto.Int64(0), Max: proto.Int64(maxStillsLimit),
+				Label:       t.T("maxStillsLabel"),
+				Description: t.T("maxStillsHelp"),
 			},
 			sizeField(keyBackdropSize, "backdropSize", backdropSizes, t),
 			sizeField(keyPosterSize, "posterSize", posterSizes, t),
@@ -221,13 +221,13 @@ func (p *provider) Configure(ctx context.Context, req *pluginv1.ConfigureRequest
 		}
 		maxCast = n
 	}
-	maxBackdrops := defaultMaxBackdrops
-	if raw := strings.TrimSpace(v[keyMaxBackdrops]); raw != "" {
+	maxStills := defaultMaxStills
+	if raw := strings.TrimSpace(v[keyMaxStills]); raw != "" {
 		n, err := strconv.Atoi(raw)
-		if err != nil || n < 0 || n > maxBackdropsLimit {
-			resp.FieldErrors[keyMaxBackdrops] = t.T("errMaxBackdrops")
+		if err != nil || n < 0 || n > maxStillsLimit {
+			resp.FieldErrors[keyMaxStills] = t.T("errMaxStills")
 		}
-		maxBackdrops = n
+		maxStills = n
 	}
 	var sizes imageSizes
 	for _, f := range []struct {
@@ -271,7 +271,7 @@ func (p *provider) Configure(ctx context.Context, req *pluginv1.ConfigureRequest
 	}
 	p.mu.Lock()
 	p.client, p.includeAdult = c, v[keyIncludeAdult] == "true"
-	p.maxCast, p.certCountry, p.maxBackdrops, p.sizes = maxCast, country, maxBackdrops, sizes
+	p.maxCast, p.certCountry, p.maxStills, p.sizes = maxCast, country, maxStills, sizes
 	p.mu.Unlock()
 	p.conv.setOff(v[keyConvertZh] == "false")
 	p.trimSeries.Store(v[keyTrimSeries] == "true")

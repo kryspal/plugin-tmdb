@@ -243,11 +243,15 @@ func (p *provider) ratingCountry(target locale) string {
 	return first(p.certCountry, target.region, "US")
 }
 
-// backdropLimit is the cap on the number of backdrops (0 means all).
+// backdropLimit is the cap on the number of backdrop candidates (0 means all): the stills setting plus the first image,
+// which the host uses as the background picture.
 func (p *provider) backdropLimit() int {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	return p.maxBackdrops
+	if p.maxStills == 0 {
+		return 0
+	}
+	return p.maxStills + 1
 }
 
 // imageSizes returns the configured download sizes.
