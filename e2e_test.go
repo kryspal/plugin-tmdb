@@ -91,6 +91,30 @@ func TestRealTMDB(t *testing.T) {
 		t.Errorf("person 287: %v", person)
 	}
 
+	// Person backdrops (host feature person_backdrop): the wide pictures person 287 is tagged in. The log shows what kinds of pictures TMDB tags
+	// (counts per image_type) and what the plugin keeps; nothing is printed that could identify a library.
+	t.Setenv("KRYSPAL_HOST_FEATURES", "person_backdrop")
+	var tagged tmdbTagged
+	if c, _, err := p.ready(); err == nil {
+		if err := c.get(ctx, "/person/287/tagged_images", nil, &tagged); err != nil {
+			t.Errorf("tagged_images: %v", err)
+		}
+	}
+	kinds := map[string]int{}
+	for _, r := range tagged.Results {
+		kinds[r.ImageType]++
+	}
+	backdrops, err := p.GetImages(ctx, &pluginv1.GetImagesRequest{Type: pluginv1.ItemType_ITEM_TYPE_PERSON, ProviderIds: map[string]string{"tmdb": "287"},
+		Types: []pluginv1.ImageType{pluginv1.ImageType_IMAGE_TYPE_BACKDROP}})
+	if err != nil {
+		t.Fatalf("person backdrops: %v", err)
+	}
+	t.Logf("tagged pictures: %d on this page, by image_type %v; kept %d backdrops", len(tagged.Results), kinds, len(backdrops.GetImages()))
+	if len(backdrops.GetImages()) > 0 {
+		b := backdrops.GetImages()[0]
+		t.Logf("first backdrop: %dx%d type=%v", b.GetWidth(), b.GetHeight(), b.GetType())
+	}
+
 	col, err := p.GetCollection(ctx, &pluginv1.GetCollectionRequest{Id: "10", Languages: zhTW})
 	if err != nil {
 		t.Fatalf("collection 10: %v", err)
