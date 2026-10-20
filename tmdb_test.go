@@ -262,19 +262,6 @@ func newFakeTMDB(t *testing.T) *fakeTMDB {
 				img("/low.jpg", "", "", 3), img("/best.jpg", "", "", 9), map[string]any{"file_path": "/vec.svg", "vote_average": 10.0, "width": 10, "height": 10},
 				img("/mid.jpg", "", "", 5)}}
 		},
-		"/3/person/287/tagged_images": func(q map[string]string) (int, any) {
-			tag := func(path, typ string, w, h int, vote float64, votes int, adult bool) map[string]any {
-				return map[string]any{"file_path": path, "image_type": typ, "width": w, "height": h, "aspect_ratio": float64(w) / float64(h),
-					"vote_average": vote, "vote_count": votes, "iso_639_1": nil, "media": map[string]any{"adult": adult}}
-			}
-			return 200, map[string]any{"id": 287, "page": 1, "total_pages": 1, "results": []any{
-				tag("/t-low.jpg", "backdrop", 1920, 1080, 4, 3, false), tag("/t-best.jpg", "still", 3840, 2160, 8, 20, false),
-				tag("/t-tie-wide.jpg", "backdrop", 3840, 2160, 6, 5, false), tag("/t-tie-narrow.jpg", "backdrop", 1920, 1080, 6, 5, false),
-				tag("/t-poster.jpg", "poster", 2000, 3000, 9, 50, false), tag("/t-portrait-still.jpg", "still", 1080, 1920, 9, 50, false),
-				tag("/t-small.jpg", "backdrop", 1000, 560, 9, 50, false), tag("/t-adult.jpg", "backdrop", 3840, 2160, 9.5, 99, true),
-				tag("/t-best.jpg", "backdrop", 3840, 2160, 8, 20, false), tag("/t-vec.svg", "backdrop", 3840, 2160, 9, 50, false),
-				tag("/t-square-wide.jpg", "backdrop", 2000, 1500, 9, 50, false)}}
-		},
 		"/3/person/1": func(q map[string]string) (int, any) {
 			return 200, map[string]any{"id": 1, "name": "Someone", "translations": map[string]any{"translations": []any{
 				tr("zh", "CN", map[string]any{"name": "张艺谋"}),
@@ -1728,117 +1715,6 @@ func TestPersonImages(t *testing.T) {
 	if _, err := newProvider().GetImages(ctx, &pluginv1.GetImagesRequest{Type: pluginv1.ItemType_ITEM_TYPE_PERSON, ProviderIds: map[string]string{"tmdb": "287"}}); code(err) != codes.FailedPrecondition {
 		t.Errorf("unconfigured = %v, want FailedPrecondition", err)
 	}
-}
-
-// Person backdrops (host feature person_backdrop): wide, large pictures the person is tagged in, best first; only for BACKDROP requests.
-func TestPersonBackdrops(t *testing.T) {
-	ctx := context.Background()
-	person := func(types ...pluginv1.ImageType) *pluginv1.GetImagesRequest {
-		return &pluginv1.GetImagesRequest{Type: pluginv1.ItemType_ITEM_TYPE_PERSON, ProviderIds: map[string]string{"tmdb": "287"}, Types: types}
-	}
-	backdrop := pluginv1.ImageType_IMAGE_TYPE_BACKDROP
-	paths := func(imgs []*pluginv1.Image) string { return strings.Join(trimBase(urlsOf(imgs)), " ") }
-
-	// A host without the feature gets no backdrops, and no request for them is made.
-	t.Setenv("KRYSPAL_HOST_FEATURES", "")
-	f := newFakeTMDB(t)
-	p := configured(t, f)
-	resp, err := p.GetImages(ctx, person(backdrop))
-	if err != nil || len(resp.GetImages()) != 0 {
-		t.Errorf("host without person_backdrop: %v %v", resp.GetImages(), err)
-	}
-	if resp, _ := p.GetImages(ctx, person()); len(resp.GetImages()) != 3 {
-		t.Errorf("all types without the feature must still be the photos only: %v", resp.GetImages())
-	}
-	for _, path := range f.seen() {
-		if strings.Contains(path, "tagged_images") {
-			t.Errorf("tagged_images requested without the feature: %s", path)
-		}
-	}
-
-	t.Setenv("KRYSPAL_HOST_FEATURES", "person_backdrop")
-	f = newFakeTMDB(t)
-	p = configured(t, f)
-	resp, err = p.GetImages(ctx, person(backdrop))
-	if err != nil {
-		t.Fatal(err)
-	}
-	// Rating, then votes, then width. Excluded: portrait and square pictures, posters, pictures under 1280 wide, adult titles, svg, duplicates.
-	if want := "/t-best.jpg /t-tie-wide.jpg /t-tie-narrow.jpg /t-low.jpg"; paths(resp.GetImages()) != want {
-		t.Errorf("order = %s; want %s", paths(resp.GetImages()), want)
-	}
-	for _, i := range resp.GetImages() {
-		if i.GetType() != backdrop || i.GetLanguage() != "" || i.GetWidth() < 1280 {
-			t.Errorf("image = %v", i)
-		}
-	}
-	for _, path := range f.seen() {
-		if strings.Contains(path, "/images") && !strings.Contains(path, "tagged") {
-			t.Errorf("a BACKDROP-only request must not fetch the photos: %s", path)
-		}
-	}
-	// All types: the photos as primary, then the backdrops.
-	resp, _ = p.GetImages(ctx, person())
-	var prim, back int
-	for _, i := range resp.GetImages() {
-		switch i.GetType() {
-		case pluginv1.ImageType_IMAGE_TYPE_PRIMARY:
-			prim++
-		case backdrop:
-			back++
-		}
-	}
-	if prim != 3 || back != 4 {
-		t.Errorf("all types: %d photos, %d backdrops", prim, back)
-	}
-	// Photos only: no backdrops. Limit applies to the backdrops.
-	if resp, _ := p.GetImages(ctx, person(pluginv1.ImageType_IMAGE_TYPE_PRIMARY)); len(resp.GetImages()) != 3 {
-		t.Errorf("photos only = %v", resp.GetImages())
-	}
-	lim := person(backdrop)
-	lim.LimitPerType = 2
-	if resp, _ := p.GetImages(ctx, lim); paths(resp.GetImages()) != "/t-best.jpg /t-tie-wide.jpg" {
-		t.Errorf("limit 2 = %s", paths(resp.GetImages()))
-	}
-	// GetPerson does not carry backdrops.
-	pe, err := p.GetPerson(ctx, &pluginv1.GetPersonRequest{Id: "287"})
-	if err == nil {
-		for _, i := range pe.GetImages() {
-			if i.GetType() == backdrop {
-				t.Errorf("GetPerson must not return a backdrop: %v", i)
-			}
-		}
-	}
-	for _, path := range f.seen() {
-		if strings.Contains(path, "/person/287") && !strings.Contains(path, "images") && strings.Contains(path, "tagged") {
-			t.Errorf("GetPerson requested tagged images: %s", path)
-		}
-	}
-	// Adult titles are included when the plugin is set to include them.
-	adult := configured(t, f)
-	adult.includeAdult = true
-	resp, _ = adult.GetImages(ctx, person(backdrop))
-	if !strings.HasPrefix(paths(resp.GetImages()), "/t-adult.jpg ") {
-		t.Errorf("with include_adult = %s", paths(resp.GetImages()))
-	}
-	// Unknown person: an empty list, not an error; the size setting applies.
-	if none, err := p.GetImages(ctx, &pluginv1.GetImagesRequest{Type: pluginv1.ItemType_ITEM_TYPE_PERSON, ProviderIds: map[string]string{"tmdb": "99999999"}, Types: []pluginv1.ImageType{backdrop}}); err != nil || len(none.GetImages()) != 0 {
-		t.Errorf("unknown person = %v, %v", none, err)
-	}
-	small := configured(t, f)
-	small.sizes.backdrop = "w1280"
-	resp, _ = small.GetImages(ctx, person(backdrop))
-	if len(resp.GetImages()) == 0 || !strings.Contains(resp.GetImages()[0].GetUrl(), "/w1280/t-best.jpg") || resp.GetImages()[0].GetWidth() != 1280 || resp.GetImages()[0].GetHeight() != 720 {
-		t.Errorf("w1280: %v", resp.GetImages())
-	}
-}
-
-func urlsOf(imgs []*pluginv1.Image) []string {
-	var out []string
-	for _, i := range imgs {
-		out = append(out, i.GetUrl())
-	}
-	return out
 }
 
 // trimBase drops the image base URL so the test reads the file paths.

@@ -2,11 +2,6 @@
 
 All notable changes to this plugin are listed here. The version in `VERSION` is the single source of the version number; a published version is never changed.
 
-## 2.6.0
-
-- Person backdrops: on servers that keep a backdrop for each person, a request for a person's backdrop now returns wide pictures the person is tagged in on TMDB (the pictures of the titles they appear in), best first: by rating, then votes, then width. Only landscape pictures at least 1280 pixels wide qualify; posters, portrait or small pictures and pictures of adult titles (unless "Include adult" is on) are left out. They are offered only when the server asks for backdrops, so an administrator picks one by hand; person details do not carry them, because tagged pictures are scenes and group shots whose quality cannot be judged automatically. Older servers get exactly what they got before.
-- Built with plugin SDK v0.2.0. Needs server 0.9.2 or newer.
-
 ## 2.5.0
 
 - Renames the advanced setting `max_backdrops` to `max_stills`, "Maximum stills", and raises its default from 20 to 30 (still 0 to 200, 0 means all). The plugin now returns that many stills plus one more backdrop, the first, which the server uses as the background picture.
