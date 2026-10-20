@@ -2,10 +2,8 @@ package main
 
 import (
 	"context"
-	"net/url"
 	"os"
 	"slices"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -97,34 +95,12 @@ func TestRealTMDB(t *testing.T) {
 	// (counts per image_type) and what the plugin keeps; nothing is printed that could identify a library.
 	t.Setenv("KRYSPAL_HOST_FEATURES", "person_backdrop")
 	var tagged tmdbTagged
-	kinds := map[string]int{}
 	if c, _, err := p.ready(); err == nil {
-		// Probe a few well-known public people and up to three pages each, to see which kinds of pictures TMDB users tag people in.
-		for _, id := range []string{"287", "6193", "1245"} {
-			counts := map[string]int{}
-			wide := 0
-			for page := 1; page <= 3; page++ {
-				var tg tmdbTagged
-				if err := c.get(ctx, "/person/"+id+"/tagged_images", url.Values{"page": {strconv.Itoa(page)}}, &tg); err != nil {
-					t.Errorf("tagged_images %s page %d: %v", id, page, err)
-					break
-				}
-				if page == 1 && id == "287" {
-					tagged = tg
-				}
-				for _, r := range tg.Results {
-					counts[r.ImageType]++
-					if r.Width >= backdropMinWidth && r.AspectRatio >= backdropMinAspect {
-						wide++
-					}
-				}
-				if len(tg.Results) == 0 {
-					break
-				}
-			}
-			t.Logf("person %s, pages 1-3: by image_type %v; wide and large: %d", id, counts, wide)
+		if err := c.get(ctx, "/person/287/tagged_images", nil, &tagged); err != nil {
+			t.Errorf("tagged_images: %v", err)
 		}
 	}
+	kinds := map[string]int{}
 	for _, r := range tagged.Results {
 		kinds[r.ImageType]++
 	}
