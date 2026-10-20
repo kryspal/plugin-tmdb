@@ -2,6 +2,11 @@
 
 All notable changes to this plugin are listed here. The version in `VERSION` is the single source of the version number; a published version is never changed.
 
+## 2.5.1
+
+- A candidate whose name is only the beginning of the searched title no longer scores almost as high as the candidate whose name is identical: when an identical match exists, prefix matches are held at 0.85 (reason `title.shadowed`), so the server applies the identical one instead of calling the pair ambiguous. Without an identical match nothing changes.
+- Built with plugin SDK v0.2.0. Needs server 0.9.2 or newer.
+
 ## 2.5.0
 
 - Renames the advanced setting `max_backdrops` to `max_stills`, "Maximum stills", and raises its default from 20 to 30 (still 0 to 200, 0 means all). The plugin now returns that many stills plus one more backdrop, the first, which the server uses as the background picture.

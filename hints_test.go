@@ -621,3 +621,41 @@ func TestYearTwinsArePenalized(t *testing.T) {
 		t.Error("penalizeYearTwins modified a reasons slice it was given")
 	}
 }
+
+// A query longer than a candidate's name scores 0.95 by prefix; when another candidate matches identically, the prefix match is held at shadowedCap so the identical one leads by at least 0.1.
+func TestShadowedPrefixIsCapped(t *testing.T) {
+	p := newProvider()
+	titles := []hintTitle{{text: "Steel Alchemist Brotherhood", role: rolePrimary, weight: 1}}
+	r := &pluginv1.SearchRequest{Name: "Steel Alchemist Brotherhood"}
+	mk := func(id int, title string) scored {
+		return p.hintScore(r, "tv", titles, tmdbSearchResult{ID: id, Name: title, OriginalName: title, FirstAirDate: "2009-04-05", PosterPath: "/p.jpg"}, nil)
+	}
+	exact, prefix := mk(1, "Steel Alchemist Brotherhood"), mk(2, "Steel Alchemist")
+	if exact.score < 0.999 || prefix.score < 0.9 || !slices.Contains(prefix.reasons, "title.prefix") {
+		t.Fatalf("test setup: exact %v prefix %v", exact, prefix)
+	}
+	got := capShadowedPrefixes([]scored{prefix, exact})
+	if got[0].score != shadowedCap || !slices.Contains(got[0].reasons, "title.shadowed") || got[1].score != exact.score || got[1].score-got[0].score < 0.1 {
+		t.Errorf("capped list: %+v", got)
+	}
+	if slices.Contains(prefix.reasons, "title.shadowed") {
+		t.Error("capShadowedPrefixes modified a reasons slice it was given")
+	}
+	// Without an identical match the prefix match keeps its score.
+	if g := capShadowedPrefixes([]scored{prefix}); g[0].score != prefix.score {
+		t.Errorf("lone prefix changed: %+v", g)
+	}
+	// The same rule on the plain search path.
+	hits := []tmdbSearchResult{{ID: 1, Name: "Steel Alchemist Brotherhood", FirstAirDate: "2009-04-05", PosterPath: "/p"}, {ID: 2, Name: "Steel Alchemist", FirstAirDate: "2009-04-05", PosterPath: "/p"}}
+	base := func(h tmdbSearchResult) float64 { return p.score("Steel Alchemist Brotherhood", 0, h) }
+	if base(hits[1]) != 0.95 {
+		t.Fatalf("test setup: prefix scores %v", base(hits[1]))
+	}
+	sc := p.shadowPrefixScore("Steel Alchemist Brotherhood", hits, nil, base)
+	if sc(hits[0]) != 1 || sc(hits[1]) != shadowedCap {
+		t.Errorf("plain search: exact %v prefix %v", sc(hits[0]), sc(hits[1]))
+	}
+	if sc := p.shadowPrefixScore("Steel Alchemist Brotherhood", hits[1:], nil, base); sc(hits[1]) != 0.95 {
+		t.Errorf("plain search without an identical match: %v", sc(hits[1]))
+	}
+}

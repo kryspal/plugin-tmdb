@@ -411,7 +411,26 @@ func (s *hintedSearch) scoreAll() []scored {
 	for i, h := range s.hits {
 		out[i] = s.p.hintScore(s.req, s.kind, s.titles, h, s.infos[h.ID])
 	}
-	return penalizeYearTwins(out)
+	return capShadowedPrefixes(penalizeYearTwins(out))
+}
+
+// shadowedCap is the most a prefix match may score when the same result list holds an identical match: a query longer than a candidate's name scores 0.95 by prefix
+// (`Steel Alchemist` for the query `Steel Alchemist Brotherhood`), so an identical match at 1 would lead it by only 0.05 and the host would call the pair ambiguous.
+const shadowedCap = 0.85
+
+// capShadowedPrefixes holds prefix matches at shadowedCap when a candidate matched a title identically (by name or alias); with no identical match every prefix match keeps its score.
+func capShadowedPrefixes(list []scored) []scored {
+	has := func(x scored, code string) bool { return slices.Contains(x.reasons, code) }
+	if !slices.ContainsFunc(list, func(x scored) bool { return has(x, "title.exact") || has(x, "title.alias") }) {
+		return list
+	}
+	for i, x := range list {
+		if has(x, "title.prefix") && x.score > shadowedCap {
+			list[i].score = shadowedCap
+			list[i].reasons = append(slices.Clone(x.reasons), "title.shadowed")
+		}
+	}
+	return list
 }
 
 // twinPenalty is the extra deduction for a candidate whose year is 1 to 2 years off when a same-title rival has an exact year match: works with the same name (for example two works with one name, two years apart)

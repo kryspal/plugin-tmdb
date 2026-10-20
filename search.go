@@ -131,7 +131,31 @@ func (p *provider) search(ctx context.Context, req *pluginv1.SearchRequest) (*pl
 			return sequelGuard(name, append([]string{first(h.Title, h.Name), first(h.OriginalTitle, h.OriginalName)}, extraAll[h.ID]...), base(h))
 		}
 	}
-	return p.candidates(hits, req, score), nil
+	return p.candidates(hits, req, p.shadowPrefixScore(name, hits, extraAll, score)), nil
+}
+
+// shadowPrefixScore wraps score so that prefix matches are held at shadowedCap when some candidate's name is identical to the query (the same rule as capShadowedPrefixes in the hinted search);
+// with no identical match it returns score unchanged.
+func (p *provider) shadowPrefixScore(name string, hits []tmdbSearchResult, extra map[int][]string, score func(tmdbSearchResult) float64) func(tmdbSearchResult) float64 {
+	if !slices.ContainsFunc(hits, func(h tmdbSearchResult) bool { return p.bestTitle(name, h, extra[h.ID]) >= 0.999 }) {
+		return score
+	}
+	return func(h tmdbSearchResult) float64 {
+		s := score(h)
+		if b := p.bestTitle(name, h, extra[h.ID]); b < 0.999 && b >= 0.85 && s > shadowedCap {
+			return shadowedCap
+		}
+		return s
+	}
+}
+
+// bestTitle is the title part of scoreWith: the highest title score over the candidate's localized name, original name and extra names.
+func (p *provider) bestTitle(query string, h tmdbSearchResult, extra []string) float64 {
+	s := max(p.titleScore(query, first(h.Title, h.Name)), p.titleScore(query, first(h.OriginalTitle, h.OriginalName)))
+	for _, n := range extra {
+		s = max(s, p.titleScore(query, n))
+	}
+	return s
 }
 
 // withAliases fetches the aliases and translated names of the top aliasCandidates candidates (failures are skipped and do not affect the search).
@@ -231,10 +255,7 @@ func (p *provider) score(query string, wantYear int, h tmdbSearchResult) float64
 
 // scoreWith is the same as score, but also compares the title against extra (aliases and per-language translated names), taking the highest score; the year and poster penalties are unchanged.
 func (p *provider) scoreWith(query string, wantYear int, h tmdbSearchResult, extra []string) float64 {
-	s := max(p.titleScore(query, first(h.Title, h.Name)), p.titleScore(query, first(h.OriginalTitle, h.OriginalName)))
-	for _, n := range extra {
-		s = max(s, p.titleScore(query, n))
-	}
+	s := p.bestTitle(query, h, extra)
 	y := int(year(first(h.ReleaseDate, h.FirstAirDate)))
 	switch {
 	case wantYear == 0:
