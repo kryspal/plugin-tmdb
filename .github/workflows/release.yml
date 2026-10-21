@@ -59,6 +59,6 @@ jobs:
           TOKEN: ${{ secrets.PLUGIN_DISPATCH_TOKEN }}
           MAIN_REPO: ${{ vars.MAIN_REPO }}
         run: |
-          curl -fsS -X POST "https://api.github.com/repos/${MAIN_REPO}/actions/workflows/publish-plugin.yml/dispatches" \
+          curl -fsS --retry 3 --retry-all-errors --retry-delay 10 -X POST "https://api.github.com/repos/${MAIN_REPO}/actions/workflows/publish-plugin.yml/dispatches" \
             -H "Authorization: Bearer ${TOKEN}" -H "Accept: application/vnd.github+json" \
             -d "{\"ref\":\"main\",\"inputs\":{\"plugin\":\"${PLUGIN_ID}\",\"version\":\"${GITHUB_REF_NAME#v}\",\"repository\":\"${GITHUB_REPOSITORY}\"}}"
