@@ -26,7 +26,7 @@ const (
 	defaultBaseURL = "https://api.themoviedb.org/3"
 	// imageBase is the URL prefix of TMDB's image CDN; the size segment (see imagesize.go) follows it.
 	imageBase = "https://image.tmdb.org/t/p/"
-	// requestsPerSecond is the self-imposed rate limit: TMDB's cap is about 50 per second, leaving a 20% margin (owner, 2026-10-10: TMDB's limit is not low, so it can be raised).
+	// requestsPerSecond is the self-imposed rate limit: TMDB's cap is about 50 per second, leaving a 20% margin (TMDB's limit is not low, so the rate can be raised).
 	requestsPerSecond = 40
 	// maxConcurrent is the cap on simultaneous TMDB requests: 40 per second times a request time of about 0.3 s gives about 12 in flight.
 	maxConcurrent = 12

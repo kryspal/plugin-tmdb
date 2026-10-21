@@ -1,8 +1,7 @@
 // Command sdkenglish fails when the open-source trees contain Chinese outside of data: the plugin SDK in pluginapi/,
-// the plugin authoring framework in plugins/export/ (Apache-2.0 per change 0117), and the official plugins that are
-// published as open source (change 0153, owner 2026-10-14: every official plugin except nameparse). They are
-// published to an overseas audience (owner rules 2026-10-12 and 2026-10-14: open-source code has no Chinese comments),
-// so their comments and documents are written in English. The closed-source nameparse plugin is not checked.
+// the plugin authoring framework in plugins/export/, and the official plugins that are published as open source
+// (every official plugin except nameparse). They are published to an international audience, so their comments and
+// documents are written in English. The closed-source nameparse plugin is not checked.
 //
 // Checked: comments in Go files, and every line of the other text files (Markdown, proto, shell, YAML…).
 // Not checked: Go string literals (translation tables, parsing rules and test inputs are data), AGENTS.md
