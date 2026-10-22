@@ -2,6 +2,10 @@
 
 All notable changes to this plugin are listed here. The version in `VERSION` is the single source of the version number; a published version is never changed.
 
+## 2.5.2
+
+- Built with plugin SDK v0.5.0. No functional change.
+
 ## 2.5.1
 
 - A candidate whose name is only the beginning of the searched title no longer scores almost as high as the candidate whose name is identical: when an identical match exists, prefix matches are held at 0.85 (reason `title.shadowed`), so the server applies the identical one instead of calling the pair ambiguous. Without an identical match nothing changes.
