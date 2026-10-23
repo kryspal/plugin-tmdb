@@ -5,7 +5,7 @@ go 1.27
 toolchain go1.27.2
 
 require (
-	github.com/kryspal/plugin-sdk v0.5.0
+	github.com/kryspal/plugin-sdk v0.7.0
 	golang.org/x/sync v0.23.0
 	golang.org/x/text v0.42.0
 	google.golang.org/grpc v1.84.0
